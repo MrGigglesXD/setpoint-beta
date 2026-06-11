@@ -1,1 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
 
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>🏐 SETPOINT Beta 2</title>
+
+<style>
+
+:root{
+--bg:#0F172A;
+--card:#1E293B;
+--blue:#2563EB;
+--red:#DC2626;
+--green:#22C55E;
+--yellow:#F59E0B;
+--text:#FFFFFF;
+--muted:#94A3B8;
+}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+background:var(--bg);
+color:var(--text);
+font-family:Arial,sans-serif;
+padding:16px;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+.card{
+background:var(--card);
+padding:16px;
+border-radius:16px;
+margin-bottom:16px;
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+
+button{
+border:none;
+padding:12px 16px;
+border-radius:12px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn-primary{
+background:var(--blue);
+color:white;
+}
+
+.btn-danger{
+background:var(--red);
+color:white;
+}
+
+input,
+textarea,
+select{
+width:100%;
+padding:12px;
+border:none;
+border-radius:12px;
+margin-top:8px;
+}
+
+.player{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:10px;
+border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.badge{
+padding:4px 8px;
+background:var(--yellow);
+color:black;
+border-radius:8px;
+font-size:12px;
+font-weight:bold;
+}
+
+.team-container{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:16px;
+}
+
+.team-blue{
+border:2px solid var(--blue);
+padding:12px;
+border-radius:12px;
+}
+
+.team-red{
+border:2px solid var(--red);
+padding:12px;
+border-radius:12px;
+}
+
+@media(max-width:768px){
+
+.team-container{
+grid-template-columns:1fr;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏐 SETPOINT</h1>
+
+<div class="card">
+
+<h2>👥 Jugadores</h2>
+
+<textarea
+id="playersInput"
+rows="8"
+placeholder="Andrés&#10;Carlos&#10;Miguel"></textarea>
+
+<select id="playerLevel">
+
+<option value="1">⭐ Nivel 1</option>
+<option value="2">⭐⭐ Nivel 2</option>
+<option value="3" selected>⭐⭐⭐ Nivel 3</option>
+<option value="4">⭐⭐⭐⭐ Nivel 4</option>
+<option value="5">⭐⭐⭐⭐⭐ Nivel 5</option>
+
+</select>
+
+<br><br>
+
+<button
+class="btn-primary"
+onclick="addPlayers()">
+
+Agregar Jugadores
+
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>📋 Lista de Jugadores</h2>
+
+<div id="playersList"></div>
+
+</div>
+
+</div>
+
+  <div class="card">
+
+<h2>⚙️ Configuración del Partido</h2>
+
+<label>Puntos para ganar</label>
+
+<select id="matchPoints">
+<option value="16">16 puntos</option>
+<option value="21">21 puntos</option>
+<option value="25" selected>25 puntos</option>
+</select>
+
+<br><br>
+
+<label>Sets</label>
+
+<select id="matchSets">
+<option value="1">1 Set</option>
+<option value="3" selected>Mejor de 3</option>
+<option value="5">Mejor de 5</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>🏐 Generador de Equipos</h2>
+
+<button
+class="btn-primary"
+onclick="generateTeams()">
+
+Generar Equipos
+
+</button>
+
+</div>
+
+<div
+id="teamsContainer"
+class="team-container"
+style="display:none;">
+
+<div class="team-blue">
+
+<h2>🔵 Equipo Azul</h2>
+
+<div id="blueTeam"></div>
+
+</div>
+
+<div class="team-red">
+
+<h2>🔴 Equipo Rojo</h2>
+
+<div id="redTeam"></div>
+
+</div>
+
+</div>
+  
+<script>
+
+let players=[];
+
+function addPlayers(){
+
+const text=
+document.getElementById(
+"playersInput"
+).value.trim();
+
+if(!text) return;
+
+const level=
+document.getElementById(
+"playerLevel"
+).value;
+
+const names=
+text.split("\\n");
+
+names.forEach(name=>{
+
+if(name.trim()){
+
+players.push({
+
+id:Date.now()+Math.random(),
+
+name:name.trim(),
+
+level:level
+
+});
+
+}
+
+});
+
+document.getElementById(
+"playersInput"
+).value="";
+
+renderPlayers();
+
+}
+
+function renderPlayers(){
+
+const list=
+document.getElementById(
+"playersList"
+);
+
+list.innerHTML="";
+
+players.forEach(player=>{
+
+list.innerHTML+=`
+
+<div class="player">
+
+<div>
+
+<strong>${player.name}</strong>
+
+<span class="badge">
+
+Nivel ${player.level}
+
+</span>
+
+</div>
+
+<button
+class="btn-danger"
+onclick="removePlayer('${player.id}')">
+
+Eliminar
+
+</button>
+
+</div>
+
+let blueScore=0;
+let redScore=0;
+
+let history=[];
+
+`;
+
+});
+
+}
+
+function removePlayer(id){
+
+players=
+players.filter(
+p=>p.id!=id
+);
+
+renderPlayers();
+
+}
+<div class="card">
+
+<h2>🏆 Marcador</h2>
+
+<div class="team-container">
+
+<div class="team-blue">
+
+<h2 style="text-align:center;">
+🔵 AZUL
+</h2>
+
+<div
+id="blueScore"
+class="score score-blue">
+
+0
+
+</div>
+
+<div class="score-buttons">
+
+<button
+class="btn-primary"
+onclick="addPoint('blue')">
+
++1
+
+</button>
+
+<button
+class="btn-danger"
+onclick="removePoint('blue')">
+
+-1
+
+</button>
+
+</div>
+
+</div>
+
+<div class="team-red">
+
+<h2 style="text-align:center;">
+🔴 ROJO
+</h2>
+
+<div
+id="redScore"
+class="score score-red">
+
+0
+
+</div>
+
+<div class="score-buttons">
+
+<button
+class="btn-primary"
+onclick="addPoint('red')">
+
++1
+
+</button>
+
+<button
+class="btn-danger"
+onclick="removePoint('red')">
+
+-1
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<br>
+
+<button
+class="btn-primary"
+onclick="undoLastAction()">
+
+↩ Undo
+
+</button>
+
+</div>
+
+  function addPoint(team){
+
+history.push({
+blue:blueScore,
+red:redScore
+});
+
+if(team==="blue"){
+blueScore++;
+}else{
+redScore++;
+}
+
+updateScoreboard();
+
+checkWinner();
+
+}
+
+function removePoint(team){
+
+history.push({
+blue:blueScore,
+red:redScore
+});
+
+if(team==="blue" && blueScore>0){
+blueScore--;
+}
+
+if(team==="red" && redScore>0){
+redScore--;
+}
+
+updateScoreboard();
+
+}
+
+function updateScoreboard(){
+
+document
+.getElementById("blueScore")
+.innerText=
+blueScore;
+
+document
+.getElementById("redScore")
+.innerText=
+redScore;
+
+}
+
+function undoLastAction(){
+
+if(history.length===0){
+return;
+}
+
+const last=
+history.pop();
+
+blueScore=
+last.blue;
+
+redScore=
+last.red;
+
+updateScoreboard();
+
+}
+
+function checkWinner(){
+
+const points=
+parseInt(
+document.getElementById(
+"matchPoints"
+).value
+);
+
+if(blueScore>=points){
+
+showWinner(
+"🔵 EQUIPO AZUL"
+);
+
+}
+
+if(redScore>=points){
+
+showWinner(
+"🔴 EQUIPO ROJO"
+);
+
+}
+
+}
+
+function showWinner(team){
+
+alert(
+"🏆 GANADOR: " + team
+);
+
+}
+<div class="card">
+
+<h2>🏆 Sets Ganados</h2>
+
+<div class="team-container">
+
+<div class="team-blue">
+
+<h3 style="text-align:center;">
+🔵 Azul
+</h3>
+
+<div
+id="blueSets"
+class="score score-blue">
+
+0
+
+</div>
+
+</div>
+
+<div class="team-red">
+
+<h3 style="text-align:center;">
+🔴 Rojo
+</h3>
+
+<div
+id="redSets"
+class="score score-red">
+
+0
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div
+id="winnerScreen"
+style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000d;
+z-index:9999;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+text-align:center;
+">
+
+<h1
+id="winnerText"
+style="
+font-size:60px;
+margin-bottom:20px;
+">
+
+🏆 GANADOR
+
+</h1>
+
+<button
+class="btn-primary"
+onclick="closeWinner()">
+
+Cerrar
+
+</button>
+
+</div>
+  
+
+
+  function checkWinner(){
+
+const points=
+parseInt(
+document.getElementById(
+"matchPoints"
+).value
+);
+
+const totalSets=
+parseInt(
+document.getElementById(
+"matchSets"
+).value
+);
+
+const neededSets=
+Math.ceil(totalSets/2);
+
+if(
+blueScore >= points &&
+blueScore-redScore >= 2
+){
+
+blueSets++;
+
+updateSets();
+
+blueScore=0;
+redScore=0;
+
+updateScoreboard();
+
+if(blueSets>=neededSets){
+
+showWinner(
+"🔵 EQUIPO AZUL"
+);
+
+}
+
+}
+
+if(
+redScore >= points &&
+redScore-blueScore >= 2
+){
+
+redSets++;
+
+updateSets();
+
+blueScore=0;
+redScore=0;
+
+updateScoreboard();
+
+if(redSets>=neededSets){
+
+showWinner(
+"🔴 EQUIPO ROJO"
+);
+
+}
+
+}
+
+}
+  <div class="card">
+
+<h2>📜 Historial del Partido</h2>
+
+<div id="historyList">
+
+<p>No hay acciones todavía.</p>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>⭐ MVP Actual</h2>
+
+<h1 id="mvpPlayer">
+
+Sin definir
+
+</h1>
+
+</div>
+
+  function saveData(){
+
+localStorage.setItem(
+"setpoint_players",
+JSON.stringify(players)
+);
+
+localStorage.setItem(
+"setpoint_history",
+JSON.stringify(history)
+);
+
+localStorage.setItem(
+"setpoint_blueScore",
+blueScore
+);
+
+localStorage.setItem(
+"setpoint_redScore",
+redScore
+);
+
+localStorage.setItem(
+"setpoint_blueSets",
+blueSets
+);
+
+localStorage.setItem(
+"setpoint_redSets",
+redSets
+);
+
+}
+
+function loadData(){
+
+players=
+JSON.parse(
+localStorage.getItem(
+"setpoint_players"
+)
+) || [];
+
+history=
+JSON.parse(
+localStorage.getItem(
+"setpoint_history"
+)
+) || [];
+
+blueScore=
+parseInt(
+localStorage.getItem(
+"setpoint_blueScore"
+)
+) || 0;
+
+redScore=
+parseInt(
+localStorage.getItem(
+"setpoint_redScore"
+)
+) || 0;
+
+blueSets=
+parseInt(
+localStorage.getItem(
+"setpoint_blueSets"
+)
+) || 0;
+
+redSets=
+parseInt(
+localStorage.getItem(
+"setpoint_redSets"
+)
+) || 0;
+
+renderPlayers();
+updateScoreboard();
+updateSets();
+renderHistory();
+
+}
+
+window.onload=
+loadData;
+
+  
+</script>
+</body>
+</html>
